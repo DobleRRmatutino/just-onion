@@ -3,7 +3,35 @@
    WhatsApp flow, mobile nav, scroll effects
    ============================================ */
 
+// --- SINGLE SOURCE OF TRUTH ---
+// Update prices here and they propagate to both UI and WhatsApp messages.
 const WHATSAPP_NUMBER = '51976235911';
+const SAUCE_PRICE = '1.50';
+
+const PRODUCTS = {
+  burger: {
+    name: 'Hamburguesa de Cebolla',
+    price: '11.90',
+  },
+  combo: {
+    name: 'Combo Hamburguesa de Cebolla',
+    price: '16.90',
+  },
+};
+
+// --- SYNC PRICES INTO THE DOM ---
+// Keeps HTML in sync with the config above so prices are never mismatched.
+Object.entries(PRODUCTS).forEach(([key, prod]) => {
+  const card = document.querySelector(`[data-product="${key}"]`);
+  if (!card) return;
+  const priceEl = card.querySelector('.card__price');
+  if (priceEl) priceEl.textContent = `S/ ${prod.price}`;
+});
+
+// Sync sauce toggle labels (both cards)
+document.querySelectorAll('.toggle__label').forEach((label) => {
+  label.textContent = `Agregar salsa extra (+S/ ${SAUCE_PRICE})`;
+});
 
 // --- HEADER SCROLL EFFECT ---
 const header = document.getElementById('header');
@@ -32,23 +60,22 @@ nav.querySelectorAll('.header__link').forEach((link) => {
 function buildWhatsAppURL(product) {
   const card = document.querySelector(`[data-product="${product}"]`);
   const hasSauce = card.querySelector('[data-addon="sauce"]').checked;
+  const { name, price } = PRODUCTS[product];
+
+  const saucePart = hasSauce
+    ? `Salsa extra: Sí (+S/ ${SAUCE_PRICE}).`
+    : 'Salsa extra: No.';
 
   let message = '';
 
   if (product === 'burger') {
-    const saucePart = hasSauce
-      ? 'Salsa extra: Sí (+S/ 1.50).'
-      : 'Salsa extra: No.';
-    message = `Hola, quiero 1 Hamburguesa de Cebolla (S/ 12.50). ${saucePart} Gracias.`;
+    message = `Hola, quiero 1 ${name} (S/ ${price}). ${saucePart} Gracias.`;
   }
 
   if (product === 'combo') {
     const sodaInput = card.querySelector('input[name="soda"]:checked');
     const soda = sodaInput ? sodaInput.value : 'Pepsi';
-    const saucePart = hasSauce
-      ? 'Salsa extra: Sí (+S/ 1.50).'
-      : 'Salsa extra: No.';
-    message = `Hola, quiero 1 Combo Hamburguesa de Cebolla (S/ 17.50). Gaseosa: ${soda}. ${saucePart} Gracias.`;
+    message = `Hola, quiero 1 ${name} (S/ ${price}). Gaseosa: ${soda}. ${saucePart} Gracias.`;
   }
 
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
